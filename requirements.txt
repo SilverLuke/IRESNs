@@ -1,0 +1,13 @@
+tensorflow==2.8.0
+
+#tensorflow-addons==0.15.0  # ESN test
+#tensorboard_plugin_profile  # Profiler
+keras-tuner
+
+numpy
+sktime
+scikit-learn
+scipy
+matplotlib
+
+ipykernel
