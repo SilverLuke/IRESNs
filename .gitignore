@@ -1,9 +1,13 @@
+# do not sync model selection files
 models/*
 !models/.gitkeep
 
+# pip build files
 venv
-ESNs_tensorflow.egg-info
+IRESNs_tensorflow.egg-info
 build
+dist 
 
+# ide
 .idea/*
 **/__pycache__
