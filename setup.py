@@ -14,7 +14,7 @@ with open(path.join(HERE, 'README.md'), encoding='utf-8') as f:
 
 # This call to setup() does all the work
 setup(
-    name="IRESN-tensorflow",
+    name="ESNs-tensorflow",
     version="0.1.0",
     description="Library to build ESN, IRESN, IIRESN, IIRESNvsr",
     long_description=long_description,
@@ -32,7 +32,7 @@ setup(
         "Programming Language :: Python :: 3.9",
         "Operating System :: OS Independent"
     ],
-    packages=["IRESN-tensorflow"],
+    packages=["ESNs_tensorflow"],
     include_package_data=True,
     install_requires=["numpy", "tensorflow", "keras"]
 )

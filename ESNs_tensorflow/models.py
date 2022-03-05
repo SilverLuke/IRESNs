@@ -3,8 +3,8 @@ import tensorflow as tf
 from tensorflow import keras
 from tensorflow.python.types.core import TensorLike
 
-from ESNs import layer
-from ESNs import initializers
+from ESNs_tensorflow import layer
+from ESNs_tensorflow import initializers
 
 
 class ESNInterface(keras.Model):

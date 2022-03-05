@@ -1,6 +1,9 @@
 models/*
+!models/.gitkeep
+
+venv
+ESNs_tensorflow.egg-info
+build
+
 .idea/*
 **/__pycache__
-venv
-
-!models/.gitkeep
