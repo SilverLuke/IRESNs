@@ -8,6 +8,9 @@ from IRESNs_tensorflow import initializers
 
 
 class ESNInterface(keras.Model):
+    """
+    Every model use the same methods.
+    """
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.use_bias = False

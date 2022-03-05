@@ -3,6 +3,7 @@ from tensorflow.python.types.core import TensorLike
 
 
 class ESN(tf.keras.layers.RNN):
+
     def __init__(
             self,
             units: TensorLike,
@@ -12,8 +13,15 @@ class ESN(tf.keras.layers.RNN):
             recurrent_initializer=tf.keras.initializers.GlorotUniform,
             use_bias: bool = False,
             bias_initializer=tf.keras.initializers.Zeros,
+            return_sequences=False,
             **kwargs,
     ):
+        """
+        :params: units Po
+        :params: leaky
+        :params: activation
+
+        """
         cell = Reservoir(
             units=units,
             leaky=leaky,
@@ -22,13 +30,11 @@ class ESN(tf.keras.layers.RNN):
             recurrent_initializer=recurrent_initializer,
             use_bias=use_bias,
             bias_initializer=bias_initializer,
-            dtype=kwargs.get("dtype"),
-            **kwargs,
+            dtype=kwargs.get("dtype")
         )
-        super().__init__(cell, **kwargs)
+        super().__init__(cell, return_sequences=return_sequences, **kwargs)
 
     def call(self, inputs, mask=None, training=None, initial_state=None):
-        # print(inputs)
         return super().call(
             inputs,
             mask=mask,
@@ -141,4 +147,4 @@ class Reservoir(tf.keras.layers.AbstractRNNCell):
         output = self.activation(output)
         output = (1 - self.leaky) * states[0] + self.leaky * output
 
-        return output, output
+        return output, [output]
