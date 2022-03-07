@@ -73,15 +73,14 @@ class ESN(ESNInterface):
             :param input_scaling: Float for generate the kernel matrix.
                 Default: 1.
             :param leaky: Float between 0 and 1.
-                Leaking rate of the reservoir.
-                If you pass 1, it is the special case the model does not have leaky
+                Leaking rate of the reservoir. If you pass 1, it is the special case the model does not have leaky
                 integration.
                 Default: 0.1
             :param reservoir_activation: Activation function to use in the reservoir.
                 Default: hyperbolic tangent (`tf.keras.activations.tanh`).
             :param readout_activation: Activation function to use in the readout.
                 Default: hyperbolic tangent (`tf.keras.activations.softmax`).
-            :return A ESN model ready to be compiled
+            :return:A ESN model ready to be compiled
         """
         super().__init__(**kwargs)
 
@@ -165,7 +164,7 @@ class IRESN(ESNInterface):
             Default: hyperbolic tangent (`tf.keras.activations.tanh`).
         :param readout_activation: Activation function to use in the readout.
             Default: hyperbolic tangent (`tf.keras.activations.softmax`).
-        :return A IRESN model ready to be compiled
+        :return:A IRESN model ready to be compiled
         """
         super().__init__(**kwargs)
 
@@ -251,7 +250,7 @@ class IIRESN(ESNInterface):
             Default: hyperbolic tangent (`tf.keras.activations.tanh`).
         :param readout_activation: Activation function to use in the readout.
             Default: hyperbolic tangent (`tf.keras.activations.softmax`).
-        :return A IRESN model ready to be compiled
+        :return:A IRESN model ready to be compiled
         """
         super().__init__(**kwargs)
 
@@ -343,7 +342,7 @@ class IIRESNvsr(ESNInterface):
             Default: hyperbolic tangent (`tf.keras.activations.tanh`).
         :param readout_activation: Activation function to use in the readout.
             Default: hyperbolic tangent (`tf.keras.activations.softmax`).
-        :return A IRESN model ready to be compiled
+        :return:A IRESN model ready to be compiled
         """
         super().__init__(**kwargs)
         kernel_init = initializers.SplitKernel(sub_reservoirs, input_scaling, partitions=partitions)

@@ -3,7 +3,6 @@ from tensorflow.python.types.core import TensorLike
 
 
 class ESN(tf.keras.layers.RNN):
-
     def __init__(
             self,
             units: TensorLike,
@@ -17,10 +16,24 @@ class ESN(tf.keras.layers.RNN):
             **kwargs,
     ):
         """
-        :params: units Po
-        :params: leaky
-        :params: activation
-
+        :param units: Positive integer, dimensionality of the recurrent kernel.
+        :param leaky: Float between 0 and 1.
+                Leaking rate of the reservoir. If you pass 1, it is the special case the model does not have leaky
+                integration.
+                Default: 0.1
+        :param activation: Activation function to use in the reservoir.
+               Default: hyperbolic tangent (`tf.keras.activations.tanh`).
+        :param kernel_initializer: Initializer for the kernel. See initializers.py and
+               https://www.tensorflow.org/api_docs/python/tf/keras/initializers
+               Default: tf.keras.initializers.GlorotUniform.
+        :param recurrent_initializer: Initializer for the recurrent kernel. See initializers.py and
+               https://www.tensorflow.org/api_docs/python/tf/keras/initializers
+               Default: tf.keras.initializers.GlorotUniform.
+        :param use_bias: Boolean. This layer use bias
+        :param bias_initializer: Initializer for the bias vector. See initializers.py and
+               https://www.tensorflow.org/api_docs/python/tf/keras/initializers
+               Default: tf.keras.initializers.Zeros.
+        :param return_sequences: Boolean. Test for Deep layer.
         """
         cell = Reservoir(
             units=units,
@@ -64,7 +77,7 @@ class Reservoir(tf.keras.layers.AbstractRNNCell):
     def __init__(
             self,
             units: int,
-            leaky: float = 1,
+            leaky: float = 0.1,
             activation=tf.keras.activations.tanh,
             kernel_initializer=tf.keras.initializers.GlorotUniform,
             recurrent_initializer=tf.keras.initializers.GlorotUniform,
@@ -72,6 +85,25 @@ class Reservoir(tf.keras.layers.AbstractRNNCell):
             bias_initializer=tf.keras.initializers.Zeros,
             **kwargs,
     ):
+        """
+        :param units: Positive integer, dimensionality of the recurrent kernel.
+        :param leaky: Float between 0 and 1.
+                Leaking rate of the reservoir. If you pass 1, it is the special case the model does not have leaky
+                integration.
+                Default: 0.1
+        :param activation: Activation function to use in the reservoir.
+               Default: hyperbolic tangent (`tf.keras.activations.tanh`).
+        :param kernel_initializer: Initializer for the kernel. See initializers.py and
+               https://www.tensorflow.org/api_docs/python/tf/keras/initializers
+               Default: tf.keras.initializers.GlorotUniform.
+        :param recurrent_initializer: Initializer for the recurrent kernel. See initializers.py and
+               https://www.tensorflow.org/api_docs/python/tf/keras/initializers
+               Default: tf.keras.initializers.GlorotUniform.
+        :param use_bias: Boolean. This layer use bias
+        :param bias_initializer: Initializer for the bias vector. See initializers.py and
+               https://www.tensorflow.org/api_docs/python/tf/keras/initializers
+               Default: tf.keras.initializers.Zeros.
+        """
         super().__init__(name="reservoir", **kwargs)
 
         self.units = units

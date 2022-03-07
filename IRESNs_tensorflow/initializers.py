@@ -26,20 +26,12 @@ def get_spectral_radius(tensor, dtype):
     return tf.cast(tf.reduce_max(tf.abs(tf.linalg.eigvals(tensor))), dtype)
 
 
-def tf_generate_matrix(shape, spectral_radius):
-    w = tf.random.uniform(shape=shape)
-    sr = get_spectral_radius(w)
-    w = (w / sr) * spectral_radius
-    return w
-
-
 def generate_sub_reservoirs(shape, initializer, spectral_radius, connectivity, dtype=None):
-    if connectivity == 1.:
+    if connectivity == 1.:  # If full connected use this initializer because is faster than others.
         matrix = FullConnected(spectral_radius)(shape, dtype=dtype)
     elif connectivity == 0.:
         matrix = tf.zeros(shape, dtype=dtype)
     else:
-        # https://github.com/tensorflow/addons/blob/e83e71cf07f65773d0f3ba02b6de66ec3b190db7/tensorflow_addons/rnn/esn_cell.py
         matrix = initializer(shape, dtype=dtype)
         connectivity_mask = tf.cast(tf.math.less_equal(tf.random.uniform(shape), connectivity), dtype)
         matrix = tf.math.multiply(matrix, connectivity_mask)
@@ -49,8 +41,11 @@ def generate_sub_reservoirs(shape, initializer, spectral_radius, connectivity, d
     return matrix
 
 
-# matrices is a python matrix of tf.matrix
 def join_matrices(matrices):
+    """
+    :param matrices: is a python square Matrix (List of List) of tf.matrix
+    :return: A matrix
+    """
     ret = tf.concat(matrices[0], axis=1)
     for r_k in matrices[1:]:
         tmp = tf.concat(r_k, axis=1)  # axis=1 horizontal concatenation
@@ -59,6 +54,12 @@ def join_matrices(matrices):
 
 
 def check_vector(vector, length, name):
+    """
+    :param vector: The vector to be checked or a float will be converted in a vector with len equals to length.
+    :param length: The required length of the vector.
+    :param name:  Name to print in errors.
+    :return: a good vector.
+    """
     if isinstance(vector, float):
         return [vector for _ in range(length)]
     elif isinstance(vector, list):
@@ -72,6 +73,12 @@ def check_vector(vector, length, name):
 
 
 def check_matrix(matrix, length, name):
+    """
+    :param matrix: The square matrix to be checked or a float will be converted in a square matrix with len equals to length.
+    :param length: The required length.
+    :param name: Name to print in errors.
+    :return: A good matrix.
+    """
     if isinstance(matrix, float):
         return [[matrix for _ in range(length)] for _ in range(length)]
     elif isinstance(matrix, list):
@@ -97,6 +104,9 @@ def check_partition(partitions, length):
 
 
 class SplitBias(tf.keras.initializers.Initializer):
+    """
+    Bias initializer for multiple sub-reservoirs. Used in IRESN, IIRESN, IIRESNvsr.
+    """
     def __init__(self, bias_scaling, sub_reservoirs, partitions=None):
         self.partitions = check_partition(partitions, sub_reservoirs)
         if bias_scaling is None:
@@ -116,10 +126,10 @@ class SplitBias(tf.keras.initializers.Initializer):
         return join
 
 
-""" Kernel initializers """
-
-
 class Kernel(tf.keras.initializers.Initializer):
+    """
+    Kernel initializer for ESN.
+    """
     def __init__(self, initializer=tf.keras.initializers.GlorotUniform()):
         self.initializer = initializer
 
@@ -128,6 +138,9 @@ class Kernel(tf.keras.initializers.Initializer):
 
 
 class SplitKernel(tf.keras.initializers.Initializer):
+    """
+    Kernel initializer for multiple sub-reservoirs. Used in IRESN, IIRESN, IIRESNvsr.
+    """
     def __init__(self, sub_reservoirs, input_scaling, partitions=None):
         self.partitions = check_partition(partitions, sub_reservoirs)
 
@@ -145,16 +158,16 @@ class SplitKernel(tf.keras.initializers.Initializer):
             sub_kernel = init((1, units), dtype=dtype)
             sub_kernels.append(tf.linalg.LinearOperatorFullMatrix(sub_kernel))
 
-        # Build a matrix with N*N logical sub-matrices where N is the length of kernels, and put the matrix in the kernels on the diagonal
+        # Build a matrix with N*N logical sub-matrices where N is the number of sub-reservoirs, and put sub-kernels in the diagonal.
+        # See README.md image.
         ker = tf.linalg.LinearOperatorBlockDiag(sub_kernels).to_dense()
         return ker
 
 
-""" Recurrent kernel initializers """
-
-
-# ESN with variable connectivity
 class RecurrentKernel(tf.keras.initializers.Initializer):
+    """
+    Recurrent kernel with variable connectivity. Used in ESN model.
+    """
     def __init__(self, connectivity, spectral_radius, initializer=tf.keras.initializers.GlorotUniform()):
         self.connectivity = connectivity
         self.spectral_radius = spectral_radius
@@ -177,7 +190,8 @@ class RecurrentKernel(tf.keras.initializers.Initializer):
 
 class FullConnected(tf.keras.initializers.Initializer):
     """
-    ESN fully connected this is equal to RecurrentKernel with connectivity to 1 and initializer to tf.keras.initializers.RandomUniform.
+    FullConnected initializer is equal to RecurrentKernel initializer with connectivity to 1 and initializer to tf.keras.initializers.RandomUniform.
+    FullConnected is faster than RecurrentKernel. Used in ESN model.
     This initializer uses circular law to determine the values of the recurrent weight matrix
     rif. paper
     Gallicchio, Claudio, Alessio Micheli, and Luca Pedrelli.
@@ -195,6 +209,9 @@ class FullConnected(tf.keras.initializers.Initializer):
 
 
 class IRESN(tf.keras.initializers.Initializer):
+    """
+    Recurrent kernel initializer for IRESN.
+    """
     def __init__(self, sub_reservoirs, connectivity, spectral_radius, gsr: Optional[float] = None,
                  initializer=tf.keras.initializers.GlorotUniform()):
         self.spectral_radius = check_vector(spectral_radius, sub_reservoirs, "spectral radius")
@@ -219,6 +236,7 @@ class IRESN(tf.keras.initializers.Initializer):
                     recurrent_kernels[i][j] = generate_sub_reservoirs(size, self.initializer, spectral_radius,
                                                                       connectivity, dtype)
                 else:
+                    # the matrix is off-diagonal, this will create an zero matrix.
                     recurrent_kernels[i][j] = tf.zeros(size, dtype=dtype)
         matrix = join_matrices(recurrent_kernels)
         if self.gsr is not None:  # Normalize the entire matrix
@@ -228,6 +246,9 @@ class IRESN(tf.keras.initializers.Initializer):
 
 
 class IIRESN(tf.keras.initializers.Initializer):
+    """
+    Recurrent kernel initializer for IIRESN.
+    """
     def __init__(self, sub_reservoirs, reservoirs_connectivity, spectral_radius, off_diagonal_limits,
                  gsr: Optional[float] = None,
                  initializer=tf.keras.initializers.GlorotUniform()):
@@ -249,24 +270,30 @@ class IIRESN(tf.keras.initializers.Initializer):
             for j in range(self.sub_reservoirs):
                 size = (units[i], units[j])
                 connectivity = self.rc[i][j]
-                if i == j:  # if the matrix is on the diagonal, generate sub-reservoir
+                if i == j:
+                    # if the matrix is on the diagonal, generate a sub-reservoir
                     spectral_radius = self.spectral_radius[i]
                     recurrent_kernels[i][j] = generate_sub_reservoirs(size, self.initializer, spectral_radius,
                                                                       connectivity, dtype)
                 else:
+                    # the matrix is off-diagonal, this will create an interconnectivity matrix.
                     minmax = self.off_diagonal_limits[i][j]
                     init = tf.keras.initializers.RandomUniform(minval=-abs(minmax), maxval=abs(minmax))
                     matrix = init(size, dtype=dtype)
                     connectivity_mask = tf.cast(tf.math.less_equal(tf.random.uniform(size), connectivity), dtype)
                     recurrent_kernels[i][j] = tf.math.multiply(matrix, connectivity_mask)
+        # Join sub-reservoirs with interconnectivity matrix.
         matrix = join_matrices(recurrent_kernels)
-        if self.gsr is not None:  # Normalize the entire matrix
+        if self.gsr is not None:  # Normalize the entire recurrent kernel
             scaling = tf.math.divide_no_nan(self.gsr, get_spectral_radius(matrix, dtype))
             matrix = tf.multiply(matrix, scaling)
         return matrix
 
 
 class IIRESNvsr(IIRESN):
+    """
+    Recurrent kernel initializer for IIRESNvsr. Equal to IIRESN initializer.
+    """
     def __init__(self, sub_reservoirs, partitions, reservoirs_connectivity, spectral_radius, off_diagonal_limits,
                  gsr: Optional[float] = None, initializer=tf.keras.initializers.GlorotUniform()):
         super().__init__(sub_reservoirs, reservoirs_connectivity, spectral_radius, off_diagonal_limits, gsr, initializer)
