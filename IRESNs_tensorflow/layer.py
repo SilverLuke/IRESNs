@@ -10,9 +10,8 @@ class ESN(tf.keras.layers.RNN):
             activation=tf.keras.activations.tanh,
             kernel_initializer=tf.keras.initializers.GlorotUniform,
             recurrent_initializer=tf.keras.initializers.GlorotUniform,
-            use_bias: bool = False,
+            use_bias: bool = True,
             bias_initializer=tf.keras.initializers.Zeros,
-            return_sequences=False,
             **kwargs,
     ):
         """
@@ -45,7 +44,7 @@ class ESN(tf.keras.layers.RNN):
             bias_initializer=bias_initializer,
             dtype=kwargs.get("dtype")
         )
-        super().__init__(cell, return_sequences=return_sequences, **kwargs)
+        super().__init__(cell, **kwargs)
 
     def call(self, inputs, mask=None, training=None, initial_state=None):
         return super().call(
@@ -178,5 +177,4 @@ class Reservoir(tf.keras.layers.AbstractRNNCell):
             output = output + self.bias
         output = self.activation(output)
         output = (1 - self.leaky) * states[0] + self.leaky * output
-
         return output, [output]
