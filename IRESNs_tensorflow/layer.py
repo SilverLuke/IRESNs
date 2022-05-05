@@ -169,12 +169,23 @@ class Reservoir(tf.keras.layers.AbstractRNNCell):
 
     @tf.function
     def call(self, inputs, states):
-        in_matrix = tf.concat([inputs, states[0]], axis=1, name="in->state")
-        weights_matrix = tf.concat([self.kernel, self.recurrent_kernel], axis=0, name="ker->rec")
+        prev_output = states[0]
 
-        output = tf.matmul(in_matrix, weights_matrix, name="bigmul")
+        input_part = tf.matmul(inputs, self.kernel)
+        state_part = tf.matmul(prev_output, self.recurrent_kernel)
+        output = input_part + state_part
+
+        """ # Other method for call()
+        in_matrix = tf.concat([inputs, state], axis=1)  # Concat horizontally  MAT.Shape [ input.y x input.x+states.x]
+        weights_matrix = tf.concat([kernel, recurrent_kernel], axis=0)  # Concat vertically MAT
+        output = tf.linalg.matmul(in_matrix, weights_matrix)
+        """
+
         if self.use_bias:
-            output = output + self.bias
+            output += self.bias
+
         output = self.activation(output)
-        output = (1 - self.leaky) * states[0] + self.leaky * output
+        output = (1 - self.leaky) * prev_output + self.leaky * output
+
         return output, [output]
+
