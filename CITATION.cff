@@ -1,0 +1,14 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+- family-names: "Luca"
+  given-names: "Argentieri"
+- family-names: "Claudio"
+  given-names: "Gallicchio"
+- family-names: "Alessio"
+  given-names: "Micheli"
+title: "IRESNs"
+version: 1.0.0
+doi: 10.5281/zenodo.1234
+date-released: 2022-07-10
+url: "https://github.com/SilverLuke/IRESNs"
